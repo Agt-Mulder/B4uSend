@@ -1,18 +1,11 @@
 // /api/rewrite.js
 
-// This is a Node.js server-side script.
-// It receives the email text from your add-in, calls OpenAI, and returns the result.
-
 export default async function handler(request, response) {
-  // Only allow POST requests
   if (request.method !== 'POST') {
     return response.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Get the API key securely from the server's environment variables
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-  const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
-
   if (!OPENAI_API_KEY) {
     return response.status(500).json({ error: 'API key is not configured on the server.' });
   }
@@ -42,7 +35,7 @@ export default async function handler(request, response) {
       ${emailText}
     `;
 
-    const apiResponse = await fetch(OPENAI_API_URL, {
+    const apiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -64,7 +57,6 @@ export default async function handler(request, response) {
     const data = await apiResponse.json();
     const suggestion = JSON.parse(data.choices[0].message.content);
 
-    // Send the successful response back to the add-in
     return response.status(200).json(suggestion);
 
   } catch (error) {

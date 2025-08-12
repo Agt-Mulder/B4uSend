@@ -50,7 +50,6 @@
     <script>
         const SECURE_API_URL = "https://b4u-send.vercel.app/api/rewrite";
         let suggestionCache = {};
-        let originalCoreText = ''; 
 
         Office.onReady((info) => {
             if (info.host === Office.HostType.Outlook) {
@@ -65,64 +64,25 @@
             toggleDisplay("suggestion-display", false);
             toggleDisplay("rewrite-button", false);
 
-            Office.context.mailbox.item.body.getAsync(Office.CoercionType.Html, (bodyResult) => {
+            Office.context.mailbox.item.body.getAsync(Office.CoercionType.Text, (bodyResult) => {
                 if (bodyResult.status === Office.AsyncResultStatus.Succeeded) {
-                    const htmlBody = bodyResult.value;
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = htmlBody;
-                    const plainText = tempDiv.textContent || tempDiv.innerText || "";
-                    
-                    originalCoreText = extractCoreEmailBody(plainText);
-                    
-                    if (!originalCoreText) {
-                        displayError("Could not identify the main body of the email to rewrite.");
+                    const fullEmailText = bodyResult.value;
+                    if (!fullEmailText || fullEmailText.trim().length < 10) {
+                        displayError("Email body is too short to rewrite.");
                         return;
                     }
-                    callSecureBackend(originalCoreText);
+                    callSecureBackend(fullEmailText);
                 } else {
                     displayError("Could not read the email body.");
                 }
             });
         }
 
-        function extractCoreEmailBody(text) {
-            const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-            if (lines.length === 0) return "";
-
-            let startIndex = 0;
-            let endIndex = lines.length;
-
-            const greetings = /^(hi|hello|dear|hey|good morning|good afternoon)/i;
-            if (startIndex < lines.length && greetings.test(lines[startIndex])) {
-                startIndex++;
-            }
-
-            const closings = /^(sincerely|best|regards|thanks|thank you|cheers|yours|cordially|respectfully)/i;
-            for (let i = lines.length - 1; i >= startIndex; i--) {
-                if (closings.test(lines[i])) {
-                    endIndex = i;
-                    if (i > startIndex && lines[i-1].length < 30) {
-                        endIndex = i - 1;
-                    }
-                    break;
-                }
-                if (lines[i].length < 35 && !/[.!?]$/.test(lines[i])) {
-                    endIndex = i;
-                } else {
-                    break;
-                }
-            }
-            return lines.slice(startIndex, endIndex).join(' ').trim();
-        }
-
-        // ### THIS FUNCTION IS NOW CORRECTED ###
         async function callSecureBackend(text) {
             try {
-                // The prompt is no longer defined here. We only send the raw text.
                 const response = await fetch(SECURE_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    // The body now ONLY contains the emailText, as the server expects.
                     body: JSON.stringify({ emailText: text })
                 });
 
@@ -133,8 +93,9 @@
 
                 const suggestion = await response.json();
                 
-                if (!suggestion.body) { // The backend now returns 'body', not 'rewritten_body'
-                    throw new Error("AI response did not contain a 'body' key.");
+                // This now correctly looks for 'rewritten_body'
+                if (!suggestion.rewritten_body) {
+                    throw new Error("AI response did not contain a 'rewritten_body' key.");
                 }
 
                 suggestionCache = suggestion;
@@ -146,35 +107,31 @@
         }
 
         function useSuggestion() {
-            if (!suggestionCache.body) {
-                console.error("No suggestion available to use.");
+            if (!suggestionCache.rewritten_body) {
+                console.error("No valid suggestion available to use.");
                 return;
             }
 
             Office.context.mailbox.item.subject.setAsync(suggestionCache.subject);
             
-            Office.context.mailbox.item.body.getAsync(Office.CoercionType.Html, (result) => {
-                if (result.status === Office.AsyncResultStatus.Succeeded) {
-                    let originalHTML = result.value;
-                    const suggestedBodyHTML = `<p>${suggestionCache.body.replace(/\n/g, "</p><p>")}</p>`;
-                    const finalHTML = originalHTML.replace(originalCoreText, suggestedBodyHTML);
-                    
-                    Office.context.mailbox.item.body.setAsync(
-                        finalHTML,
-                        { coercionType: Office.CoercionType.Html }
-                    );
-                } else {
-                    console.error("Could not get email body to perform replacement.");
-                }
-            });
+            const greeting = suggestionCache.original_greeting || "Hello,";
+            const body = suggestionCache.rewritten_body;
+            const signature = suggestionCache.original_signature || "";
+            
+            const finalBody = `${greeting}\n\n${body}\n\n${signature}`;
+                      
+            Office.context.mailbox.item.body.setAsync(
+                finalBody,
+                { coercionType: Office.CoercionType.Text }
+            );
         }
 
         function displaySuggestion(suggestion) {
             document.getElementById("suggested-subject").innerText = suggestion.subject || "No subject suggested.";
-            document.getElementById("suggested-body").innerText = suggestion.body || "No suggestion was returned.";
+            document.getElementById("suggested-body").innerText = suggestion.rewritten_body || "No suggestion was returned.";
             toggleDisplay("loading", false);
             toggleDisplay("suggestion-display", true);
-            toggleDisplay("rewrite-button", false);
+            toggleDisplay("rewrite-button", true);
         }
 
         function displayError(message) {
