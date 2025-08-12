@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xmlns:mailappvo="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="MailApp">
-  <Id>b49599a5-754c-4443-845f-7901b495a142</Id>
-  <Version>1.0.0.1</Version>
-  <ProviderName>Your Name</ProviderName>
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xmlns:mailappvo="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="MailApp">
+  <!-- A brand-new, unique ID for this final version -->
+  <Id>f89c7238-37a3-48b5-812e-a3a4f8c7e9a2</Id>
+  <Version>6.0.0.0</Version>
+  <ProviderName>b4usend</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="b4usend"/>
   <Description DefaultValue="Rewrites email content using AI."/>
@@ -10,7 +11,6 @@
   <HighResolutionIconUrl DefaultValue="https://raw.githubusercontent.com/OfficeDev/office-js-snippets/prod/samples/assets/icon-128.png"/>
   <SupportUrl DefaultValue="https://www.contoso.com/help"/>
   <AppDomains>
-    <AppDomain>https://api.openai.com</AppDomain>
     <AppDomain>https://b4u-send.vercel.app</AppDomain>
   </AppDomains>
   <Hosts>
@@ -42,6 +42,16 @@
                 <Label resid="GroupLabel"/>
                 <Control xsi:type="Button" id="msgComposeOpenPaneButton">
                   <Label resid="TaskpaneButton.Label"/>
+                  <!-- This Supertip section is required and was missing -->
+                  <Supertip>
+                    <Title resid="TaskpaneButton.Label"/>
+                    <Description resid="TaskpaneButton.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16"/>
+                    <bt:Image size="32" resid="Icon.32x32"/>
+                    <bt:Image size="80" resid="Icon.80x80"/>
+                  </Icon>
                   <Action xsi:type="ShowTaskpane">
                     <SourceLocation resid="Taskpane.Url"/>
                   </Action>
@@ -59,13 +69,15 @@
         <bt:Image id="Icon.80x80" DefaultValue="https://raw.githubusercontent.com/OfficeDev/office-js-snippets/prod/samples/assets/icon-80.png"/>
       </bt:Images>
       <bt:Urls>
-        <!-- THIS URL IS NOW CORRECTED -->
         <bt:Url id="Taskpane.Url" DefaultValue="https://b4u-send.vercel.app/taskpane.html"/>
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GroupLabel" DefaultValue="b4usend"/>
         <bt:String id="TaskpaneButton.Label" DefaultValue="b4usend"/>
       </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Opens the b4usend AI email rewriter."/>
+      </bt:LongStrings>
     </Resources>
   </VersionOverrides>
 </OfficeApp>
