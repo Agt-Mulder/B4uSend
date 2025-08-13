@@ -27,7 +27,8 @@
         }
         .suggestion-box { background-color: #ffffff; border: 1px solid #c8c6c4; border-radius: 4px; padding: 15px; margin-top: 5px; white-space: pre-wrap; word-wrap: break-word; text-align: left; }
         #loading { font-style: italic; color: #605e5c; }
-        .button-group { display: flex; gap: 10px; width: 100%; }
+        .button-group { display: flex; flex-direction: column; gap: 5px; width: 100%; }
+        .copy-success { color: #107c10; font-weight: bold; text-align: center; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
@@ -37,10 +38,15 @@
         <div id="suggestion-display" style="display: none; width: 100%;">
             <h3>Suggested Subject:</h3>
             <div class="suggestion-box" id="suggested-subject"></div>
+            <button id="copy-subject-button">Copy Subject</button>
+            
             <h3>Suggested Body:</h3>
             <div class="suggestion-box" id="suggested-body"></div>
-            <div class="button-group">
-                <button id="use-this-button">Use This</button>
+            <button id="copy-body-button">Copy Body</button>
+
+            <p class="copy-success" id="copy-success-message">Copied!</p>
+            
+            <div class="button-group" style="margin-top: 20px;">
                 <button id="try-again-button">Try Again</button>
             </div>
         </div>
@@ -54,7 +60,8 @@
         Office.onReady((info) => {
             if (info.host === Office.HostType.Outlook) {
                 document.getElementById("rewrite-button").onclick = rewriteEmail;
-                document.getElementById("use-this-button").onclick = useSuggestion;
+                document.getElementById("copy-subject-button").onclick = copySubject;
+                document.getElementById("copy-body-button").onclick = copyBody;
                 document.getElementById("try-again-button").onclick = rewriteEmail;
             }
         });
@@ -63,8 +70,8 @@
             toggleDisplay("loading", true);
             toggleDisplay("suggestion-display", false);
             toggleDisplay("rewrite-button", false);
+            toggleDisplay("copy-success-message", false);
 
-            // Using plain text for reliability across all Outlook clients
             Office.context.mailbox.item.body.getAsync(Office.CoercionType.Text, (bodyResult) => {
                 if (bodyResult.status === Office.AsyncResultStatus.Succeeded) {
                     const fullEmailText = bodyResult.value;
@@ -106,25 +113,29 @@
             }
         }
 
-        function useSuggestion() {
-            if (!suggestionCache.rewritten_body) {
-                console.error("No valid suggestion available to use.");
-                return;
-            }
+        function copySubject() {
+            copyToClipboard(suggestionCache.subject);
+        }
 
-            Office.context.mailbox.item.subject.setAsync(suggestionCache.subject);
-            
-            const greeting = suggestionCache.original_greeting || "Hello,";
-            const body = suggestionCache.rewritten_body;
-            const signature = suggestionCache.original_signature || "";
-            
-            const finalBody = `${greeting}\n\n${body}\n\n${signature}`;
-                      
-            // Using plain text for reliability across all Outlook clients
-            Office.context.mailbox.item.body.setAsync(
-                finalBody,
-                { coercionType: Office.CoercionType.Text }
-            );
+        function copyBody() {
+            const fullBody = `${suggestionCache.original_greeting || 'Hello,'}\n\n${suggestionCache.rewritten_body}\n\n${suggestionCache.original_signature || ''}`;
+            copyToClipboard(fullBody);
+        }
+
+        function copyToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                const successMessage = document.getElementById("copy-success-message");
+                successMessage.style.display = 'block';
+                setTimeout(() => { successMessage.style.display = 'none'; }, 2000);
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+            }
+            document.body.removeChild(textArea);
         }
 
         function displaySuggestion(suggestion) {
@@ -132,15 +143,19 @@
             document.getElementById("suggested-body").innerText = suggestion.rewritten_body || "No suggestion was returned.";
             toggleDisplay("loading", false);
             toggleDisplay("suggestion-display", true);
-            toggleDisplay("rewrite-button", false); // Hide the initial button
+            toggleDisplay("rewrite-button", false);
         }
 
         function displayError(message) {
             document.getElementById("suggested-body").innerText = message;
             document.getElementById("suggested-subject").innerText = "Error";
             toggleDisplay("loading", false);
-            toggleDisplay("suggestion-display", false); // Hide the suggestion area on error
-            toggleDisplay("rewrite-button", true); // Show the initial button again
+            toggleDisplay("suggestion-display", true);
+            // On error, hide the copy buttons and show the main rewrite button
+            document.getElementById('copy-subject-button').style.display = 'none';
+            document.getElementById('copy-body-button').style.display = 'none';
+            document.getElementById('try-again-button').style.display = 'none';
+            toggleDisplay("rewrite-button", true);
         }
 
         function toggleDisplay(id, show) {
