@@ -5,11 +5,11 @@
   <Version>6.0.0.0</Version>
   <ProviderName>b4usend</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="b4usend"/>
+  <DisplayName DefaultValue="B4uSend"/>
   <Description DefaultValue="Rewrites email content using AI."/>
   <IconUrl DefaultValue="https://raw.githubusercontent.com/OfficeDev/office-js-snippets/prod/samples/assets/icon-64.png"/>
   <HighResolutionIconUrl DefaultValue="https://raw.githubusercontent.com/OfficeDev/office-js-snippets/prod/samples/assets/icon-128.png"/>
-  <SupportUrl DefaultValue="https://www.contoso.com/help"/>
+  <SupportUrl DefaultValue="https://www.thegso.com"/>
   <AppDomains>
     <AppDomain>https://b4u-send.vercel.app</AppDomain>
   </AppDomains>

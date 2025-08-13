@@ -50,7 +50,7 @@
     <script>
         const SECURE_API_URL = "https://b4u-send.vercel.app/api/rewrite";
         let suggestionCache = {};
-        let originalCoreText = ''; // This will store the plain text of the original core message for replacement.
+        let originalCoreText = ''; 
 
         Office.onReady((info) => {
             if (info.host === Office.HostType.Outlook) {
@@ -65,11 +65,9 @@
             toggleDisplay("suggestion-display", false);
             toggleDisplay("rewrite-button", false);
 
-            // Get the body as HTML to preserve formatting
             Office.context.mailbox.item.body.getAsync(Office.CoercionType.Html, (bodyResult) => {
                 if (bodyResult.status === Office.AsyncResultStatus.Succeeded) {
                     const htmlBody = bodyResult.value;
-                    
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = htmlBody;
                     const plainText = tempDiv.textContent || tempDiv.innerText || "";
@@ -127,7 +125,7 @@
                 3.  **Opening:** The body must begin with "Hope all is well."
                 4.  **Content:** Adhere strictly to the original message's meaning. Do not add or invent new information.
                 5.  **Exclusions:** Your response must not include a greeting or a signature.
-                6.  **Output:** You MUST return a single, valid JSON object with two keys: "subject" and "body".
+                6.  **Output:** You MUST return a single, valid JSON object with two keys: "subject" and "rewritten_body".
                 ---
                 **USER'S EMAIL TEXT TO PROCESS:**
                 ${text}
@@ -147,8 +145,9 @@
 
                 const suggestion = await response.json();
                 
-                if (!suggestion.body) {
-                    throw new Error("AI response did not contain a 'body' key.");
+                // ### FIX: Changed 'body' to 'rewritten_body' to match the backend ###
+                if (!suggestion.rewritten_body) {
+                    throw new Error("AI response did not contain a 'rewritten_body' key.");
                 }
 
                 suggestionCache = suggestion;
@@ -160,23 +159,19 @@
         }
 
         function useSuggestion() {
-            if (!suggestionCache.body) {
+            // ### FIX: Changed 'body' to 'rewritten_body' to match the backend ###
+            if (!suggestionCache.rewritten_body) {
                 console.error("No suggestion available to use.");
                 return;
             }
 
             Office.context.mailbox.item.subject.setAsync(suggestionCache.subject);
             
-            // Get the full, original HTML body again to perform the replacement
             Office.context.mailbox.item.body.getAsync(Office.CoercionType.Html, (result) => {
                 if (result.status === Office.AsyncResultStatus.Succeeded) {
                     let originalHTML = result.value;
-                    
-                    // Convert the AI's plain text suggestion into simple HTML paragraphs
-                    const suggestedBodyHTML = `<p>${suggestionCache.body.replace(/\n/g, "</p><p>")}</p>`;
-                    
-                    // Directly replace the original plain text with the new HTML suggestion.
-                    // This is the most reliable way to preserve surrounding formatting.
+                    // ### FIX: Changed 'body' to 'rewritten_body' to match the backend ###
+                    const suggestedBodyHTML = `<p>${suggestionCache.rewritten_body.replace(/\n/g, "</p><p>")}</p>`;
                     const finalHTML = originalHTML.replace(originalCoreText, suggestedBodyHTML);
                     
                     Office.context.mailbox.item.body.setAsync(
@@ -191,18 +186,19 @@
 
         function displaySuggestion(suggestion) {
             document.getElementById("suggested-subject").innerText = suggestion.subject || "No subject suggested.";
-            document.getElementById("suggested-body").innerText = suggestion.body || "No suggestion was returned.";
+            // ### FIX: Changed 'body' to 'rewritten_body' to match the backend ###
+            document.getElementById("suggested-body").innerText = suggestion.rewritten_body || "No suggestion was returned.";
             toggleDisplay("loading", false);
             toggleDisplay("suggestion-display", true);
-            toggleDisplay("rewrite-button", false); // CORRECT: Hide the initial button
+            toggleDisplay("rewrite-button", false);
         }
 
         function displayError(message) {
             document.getElementById("suggested-body").innerText = message;
             document.getElementById("suggested-subject").innerText = "Error";
             toggleDisplay("loading", false);
-            toggleDisplay("suggestion-display", false); // Hide the suggestion area on error
-            toggleDisplay("rewrite-button", true); // CORRECT: Show the initial button again
+            toggleDisplay("suggestion-display", false);
+            toggleDisplay("rewrite-button", true);
         }
 
         function toggleDisplay(id, show) {
