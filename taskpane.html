@@ -101,9 +101,6 @@
 
                 const suggestion = await response.json();
                 
-                // ### FINAL FIX ###
-                // This makes the code resilient. If the AI response is missing a key,
-                // it provides a default value instead of crashing.
                 const validatedSuggestion = {
                     subject: suggestion.subject || "No subject suggested.",
                     rewritten_body: suggestion.rewritten_body || "Could not generate a suggestion for the body.",
@@ -127,7 +124,6 @@
         }
 
         function copyBody() {
-            // This now correctly copies ONLY the rewritten body.
             copyToClipboard(suggestionCache.rewritten_body);
         }
 
@@ -160,7 +156,7 @@
             document.getElementById("suggested-subject").innerText = "Error";
             toggleDisplay("loading", false);
             toggleDisplay("suggestion-display", true);
-            // On error, hide the action buttons and show the main rewrite button
+            
             document.getElementById('use-subject-button').style.display = 'none';
             document.getElementById('copy-body-button').style.display = 'none';
             document.getElementById('try-again-button').style.display = 'none';
