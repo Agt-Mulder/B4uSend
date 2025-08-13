@@ -20,7 +20,7 @@ export default async function handler(request, response) {
       You are an expert business communication editor. Your task is to analyze an email and rewrite its core message.
 
       **CRITICAL INSTRUCTIONS:**
-      1.  **Analyze and Deconstruct:** First, silently identify the original email's greeting, core message, and signature.
+      1.  **Analyze and Deconstruct:** First, silently identify the original email's greeting (e.g., "Hi Jane,"), core message, and signature (e.g., "Thanks, Fred").
       2.  **Aggressively Rewrite the Core Message:**
           -   Your primary goal is to **transform** the message, not just make minor edits.
           -   **Drastically shorten** sentences and eliminate redundant words to improve conciseness and impact.
@@ -28,7 +28,7 @@ export default async function handler(request, response) {
           -   The rewritten body **MUST** begin with the phrase "Hope all is well."
           -   Preserve the original meaning. **DO NOT** add new information, facts, or sentiments.
       3.  **Use Paragraphs:** Structure the rewritten body with paragraph breaks (using '\\n') for readability.
-      4.  **Required JSON Output:** Your entire response **MUST** be a single, valid JSON object with four string keys: "subject", "original_greeting", "rewritten_body", and "original_signature".
+      4.  **Required JSON Output:** Your entire response **MUST** be a single, valid JSON object with four string keys: "subject", "original_greeting", "rewritten_body", and "original_signature". If a part doesn't exist (e.g., no signature), return an empty string for that key.
 
       ---
       **USER'S EMAIL TEXT TO PROCESS:**
