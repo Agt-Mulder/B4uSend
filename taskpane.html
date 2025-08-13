@@ -38,7 +38,7 @@
         <div id="suggestion-display" style="display: none; width: 100%;">
             <h3>Suggested Subject:</h3>
             <div class="suggestion-box" id="suggested-subject"></div>
-            <button id="copy-subject-button">Copy Subject</button>
+            <button id="use-subject-button">Use Subject</button>
             
             <h3>Suggested Body:</h3>
             <div class="suggestion-box" id="suggested-body"></div>
@@ -60,7 +60,7 @@
         Office.onReady((info) => {
             if (info.host === Office.HostType.Outlook) {
                 document.getElementById("rewrite-button").onclick = rewriteEmail;
-                document.getElementById("copy-subject-button").onclick = copySubject;
+                document.getElementById("use-subject-button").onclick = useSubject;
                 document.getElementById("copy-body-button").onclick = copyBody;
                 document.getElementById("try-again-button").onclick = rewriteEmail;
             }
@@ -101,8 +101,8 @@
 
                 const suggestion = await response.json();
                 
-                if (!suggestion.rewritten_body) {
-                    throw new Error("AI response did not contain a 'rewritten_body' key.");
+                if (!suggestion.rewritten_body || !suggestion.subject) {
+                    throw new Error("AI response was missing the required 'subject' or 'rewritten_body' key.");
                 }
 
                 suggestionCache = suggestion;
@@ -113,13 +113,15 @@
             }
         }
 
-        function copySubject() {
-            copyToClipboard(suggestionCache.subject);
+        function useSubject() {
+            if (suggestionCache.subject) {
+                Office.context.mailbox.item.subject.setAsync(suggestionCache.subject);
+            }
         }
 
         function copyBody() {
-            const fullBody = `${suggestionCache.original_greeting || 'Hello,'}\n\n${suggestionCache.rewritten_body}\n\n${suggestionCache.original_signature || ''}`;
-            copyToClipboard(fullBody);
+            // This now correctly copies ONLY the rewritten body.
+            copyToClipboard(suggestionCache.rewritten_body);
         }
 
         function copyToClipboard(text) {
@@ -139,8 +141,8 @@
         }
 
         function displaySuggestion(suggestion) {
-            document.getElementById("suggested-subject").innerText = suggestion.subject || "No subject suggested.";
-            document.getElementById("suggested-body").innerText = suggestion.rewritten_body || "No suggestion was returned.";
+            document.getElementById("suggested-subject").innerText = suggestion.subject;
+            document.getElementById("suggested-body").innerText = suggestion.rewritten_body;
             toggleDisplay("loading", false);
             toggleDisplay("suggestion-display", true);
             toggleDisplay("rewrite-button", false);
@@ -151,8 +153,8 @@
             document.getElementById("suggested-subject").innerText = "Error";
             toggleDisplay("loading", false);
             toggleDisplay("suggestion-display", true);
-            // On error, hide the copy buttons and show the main rewrite button
-            document.getElementById('copy-subject-button').style.display = 'none';
+            // On error, hide the action buttons and show the main rewrite button
+            document.getElementById('use-subject-button').style.display = 'none';
             document.getElementById('copy-body-button').style.display = 'none';
             document.getElementById('try-again-button').style.display = 'none';
             toggleDisplay("rewrite-button", true);

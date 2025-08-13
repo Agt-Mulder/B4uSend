@@ -28,7 +28,7 @@ export default async function handler(request, response) {
           -   The rewritten body **MUST** begin with the phrase "Hope all is well."
           -   Preserve the original meaning. **DO NOT** add new information, facts, or sentiments.
       3.  **Use Paragraphs:** Structure the rewritten body with paragraph breaks (using '\\n') for readability.
-      4.  **Required JSON Output:** Your entire response **MUST** be a single, valid JSON object with four string keys: "subject", "original_greeting", "rewritten_body", and "original_signature". If a part doesn't exist (e.g., no signature), return an empty string for that key.
+      4.  **Required JSON Output:** Your entire response **MUST** be a single, valid JSON object with four string keys: "subject", "original_greeting", "rewritten_body", and "original_signature". The "subject" key is mandatory. If other parts don't exist, return an empty string for those keys.
 
       ---
       **USER'S EMAIL TEXT TO PROCESS:**
