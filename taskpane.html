@@ -101,12 +101,19 @@
 
                 const suggestion = await response.json();
                 
-                if (!suggestion.rewritten_body || !suggestion.subject) {
-                    throw new Error("AI response was missing the required 'subject' or 'rewritten_body' key.");
-                }
+                // ### FINAL FIX ###
+                // This makes the code resilient. If the AI response is missing a key,
+                // it provides a default value instead of crashing.
+                const validatedSuggestion = {
+                    subject: suggestion.subject || "No subject suggested.",
+                    rewritten_body: suggestion.rewritten_body || "Could not generate a suggestion for the body.",
+                    original_greeting: suggestion.original_greeting,
+                    original_signature: suggestion.original_signature
+                };
 
-                suggestionCache = suggestion;
-                displaySuggestion(suggestion);
+                suggestionCache = validatedSuggestion;
+                displaySuggestion(validatedSuggestion);
+
             } catch (error) {
                 console.error("Secure backend call failed:", error);
                 displayError(`An error occurred: ${error.message}`);
